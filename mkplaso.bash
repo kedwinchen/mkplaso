@@ -22,6 +22,15 @@ LEADER_FILE="${2:+/${2}}"
 # to decrypt a Bitlocker volume
 EXTRA_ARGS=("${@:3}")
 
+# Which volumes to process
+SELECT_VOLUMES="${SELECT_VOLUMES:-all}"
+
+# Which partitions to process
+SELECT_PARTITIONS="${SELECT_PARTITIONS:-all}"
+
+# Which archive types to process
+SELECT_ARCHIVES="${SELECT_ARCHIVES:-all}"
+
 # Set this to true if running this script outside of a container
 RUN_LOCALLY="${RUN_LOCALLY:-false}"
 
@@ -56,6 +65,10 @@ fi
 
 # Use as many workers as possible unless otherwise specified
 PLASO_WORKERS="${PLASO_WORKERS:-$(nproc --ignore=1)}"
+
+# No memory limit, unless explicitly requested
+PLASO_WORKER_MEMORY_LIMIT="${PLASO_WORKER_MEMORY_LIMIT:-0}"
+PLASO_PROCESS_MEMORY_LIMIT="${PLASO_PROCESS_MEMORY_LIMIT:-0}"
 
 # TODO: evaluate better naming conventions
 OUTPUT_NAME="$(printf 'output_%s_%s.plaso' \
@@ -93,13 +106,13 @@ log2timeline \
   --status-view-interval "${PLASO_STATUS_INTERVAL}" \
   --workers "${PLASO_WORKERS}" \
   --temporary_directory "${PLASO_TMP_DIR}" \
-  --worker-memory-limit 0 \
-  --process-memory-limit 0 \
+  --worker-memory-limit "${PLASO_WORKER_MEMORY_LIMIT}" \
+  --process-memory-limit "${PLASO_PROCESS_MEMORY_LIMIT}" \
   --task-storage-format redis \
   --parsers "${PARSERS_REQUESTED}" \
-  --volumes all \
-  --archives all \
-  --partitions all \
+  --volumes "${SELECT_VOLUMES}" \
+  --partitions "${SELECT_PARTITIONS}" \
+  --archives "${SELECT_ARCHIVES}" \
   --storage-file "${OUTPUT_PATH}" \
   "${EXTRA_ARGS[@]}" \
   "${PLASO_INPUT_FILE_PATH}"
